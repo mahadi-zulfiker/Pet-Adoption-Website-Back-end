@@ -38,6 +38,8 @@ async function run() {
         //await client.connect();
 
         const PetsCollection = client.db("PawsDB").collection("pets");
+        const UsersCollection = client.db("PawsDB").collection("users");
+        const DonationCollection = client.db("PawsDB").collection("donations");
 
         //pets related api
         app.get('/pets', async (req, res) => {
@@ -47,6 +49,17 @@ async function run() {
 
         app.get("/pets/:id", async (req, res) => {
             const result = await PetsCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        //donations related api
+        app.get('/donations', async (req, res) => {
+            const result = await DonationCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.get("/donations/:id", async (req, res) => {
+            const result = await DonationCollection.findOne({ _id: new ObjectId(req.params.id), });
             res.send(result)
         })
 
