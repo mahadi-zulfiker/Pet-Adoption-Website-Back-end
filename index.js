@@ -42,6 +42,7 @@ async function run() {
         const PetsCollection = client.db("PawsDB").collection("pets");
         const UsersCollection = client.db("PawsDB").collection("users");
         const DonationCollection = client.db("PawsDB").collection("donations");
+        const addProductsCollection = client.db('PawsDB').collection('addQueries')
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
@@ -78,6 +79,53 @@ async function run() {
             }
             next();
         }
+
+        //add pets
+        app.post("/addQueries", async (req, res) => {
+            const result = await addProductsCollection.insertOne(req.body);
+            res.send(result)
+        })
+
+        app.get("/myQueries/:email", async (req, res) => {
+            const result = await addProductsCollection.find({ email: req.params.email }).toArray();
+            res.send(result)
+        })
+
+        app.get('/products', async (req, res) => {
+            const cursor = addProductsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.get("/products/:id", async (req, res) => {
+            const result = await addProductsCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.get("/singleProduct/:id", async (req, res) => {
+            const result = await addProductsCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.put("/updateProduct/:id", async (req, res) => {
+            const query = { _id: new ObjectId(req.params.id) };
+            const data = {
+                $set: {
+                    Product_Name: req.body.Product_Name,
+                    Product_Brand: req.body.Product_Brand,
+                    image: req.body.image,
+                    Boycotting_Reason_Details: req.body.Boycotting_Reason_Details,
+                    Query_Title: req.body.Query_Title,
+                }
+            }
+            const result = await addProductsCollection.updateOne(query, data);
+            res.send(result)
+        })
+
+        app.delete("/deleted/:id", async (req, res) => {
+            const result = await addProductsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+            res.send(result)
+        })
 
         //pets related api
         app.get('/pets', async (req, res) => {
@@ -153,8 +201,8 @@ async function run() {
         })
 
         // Send a ping to confirm a successful connection
-        //await client.db("admin").command({ ping: 1 });
-        //console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         //await client.close();
