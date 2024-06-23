@@ -173,13 +173,61 @@ async function run() {
         })
 
         //pets related api
-        app.get('/pets', async (req, res) => {
+        app.get('/pets', verifyToken, async (req, res) => {
             const result = await PetsCollection.find().toArray();
             res.send(result);
         })
 
-        app.get("/pets/:id", async (req, res) => {
+        app.get("/pets/:id", verifyToken, async (req, res) => {
             const result = await PetsCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.get('/pets/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { email: email };
+            const adopt = await PetsCollection.findOne(query);
+            let pending = false;
+            if (adopt) {
+                pending = adopt?.role === 'pending';
+            }
+            res.send({ pending });
+        })
+
+        app.patch('/pets/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    role: 'pending'
+                }
+            }
+            const result = await PetsCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+        app.delete('/pets/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await PetsCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        app.put("/updatePets/:id", async (req, res) => {
+            const query = { _id: new ObjectId(req.params.id) };
+            const data = {
+                $set: {
+                    Product_Name: req.body.Product_Name,
+                    Product_Brand: req.body.Product_Brand,
+                    image: req.body.image,
+                    Boycotting_Reason_Details: req.body.Boycotting_Reason_Details,
+                    Query_Title: req.body.Query_Title,
+                }
+            }
+            const result = await PetsCollection.updateOne(query, data);
             res.send(result)
         })
 
