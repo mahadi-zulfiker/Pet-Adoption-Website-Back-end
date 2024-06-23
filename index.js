@@ -43,6 +43,7 @@ async function run() {
         const UsersCollection = client.db("PawsDB").collection("users");
         const DonationCollection = client.db("PawsDB").collection("donations");
         const addProductsCollection = client.db('PawsDB').collection('addQueries')
+        const adoptCollection = client.db('PawsDB').collection('adopt')
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
@@ -79,6 +80,50 @@ async function run() {
             }
             next();
         }
+
+        //adopt pets
+        app.post("/adopt", async (req, res) => {
+            const result = await adoptCollection.insertOne(req.body);
+            res.send(result)
+        })
+
+        app.get('/adopt', async (req, res) => {
+            const result = await adoptCollection.find().toArray();
+            res.send(result);
+        });
+
+        app.get('/adopt/:email', async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { email: email };
+            const adopt = await adoptCollection.findOne(query);
+            let pending = false;
+            if (adopt) {
+                pending = adopt?.role === 'pending';
+            }
+            res.send({ pending });
+        })
+
+        app.patch('/adopt/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    role: 'pending'
+                }
+            }
+            const result = await adoptCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+        app.delete('/adopt/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await adoptCollection.deleteOne(query);
+            res.send(result);
+        })
 
         //add pets
         app.post("/addQueries", async (req, res) => {
@@ -201,8 +246,8 @@ async function run() {
         })
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         //await client.close();
