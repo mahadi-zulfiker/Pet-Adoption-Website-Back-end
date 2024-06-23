@@ -173,17 +173,17 @@ async function run() {
         })
 
         //pets related api
-        app.get('/pets', verifyToken, async (req, res) => {
+        app.get('/pets', async (req, res) => {
             const result = await PetsCollection.find().toArray();
             res.send(result);
         })
 
-        app.get("/pets/:id", verifyToken, async (req, res) => {
+        app.get("/pets/:id", async (req, res) => {
             const result = await PetsCollection.findOne({ _id: new ObjectId(req.params.id), });
             res.send(result)
         })
 
-        app.get('/pets/:email', verifyToken, async (req, res) => {
+        app.get('/pets/:email', async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
                 return res.status(403).send({ message: 'forbidden access' })
