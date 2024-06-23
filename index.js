@@ -183,6 +183,11 @@ async function run() {
             res.send(result)
         })
 
+        app.get("/singlePet/:id", async (req, res) => {
+            const result = await PetsCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
         app.get('/pets/:email', async (req, res) => {
             const email = req.params.email;
             if (email !== req.decoded.email) {
@@ -220,11 +225,11 @@ async function run() {
             const query = { _id: new ObjectId(req.params.id) };
             const data = {
                 $set: {
-                    Product_Name: req.body.Product_Name,
-                    Product_Brand: req.body.Product_Brand,
-                    image: req.body.image,
-                    Boycotting_Reason_Details: req.body.Boycotting_Reason_Details,
-                    Query_Title: req.body.Query_Title,
+                    pet_name: req.body.pet_name,
+                    pet_age: req.body.pet_age,
+                    pet_image: req.body.pet_image,
+                    pet_location: req.body.pet_location,
+                    pet_type: req.body.pet_type,
                 }
             }
             const result = await PetsCollection.updateOne(query, data);
