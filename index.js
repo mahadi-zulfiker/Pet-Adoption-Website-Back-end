@@ -42,6 +42,7 @@ async function run() {
         const PetsCollection = client.db("PawsDB").collection("pets");
         const UsersCollection = client.db("PawsDB").collection("users");
         const DonationCollection = client.db("PawsDB").collection("donations");
+        const addDonationCollection = client.db("PawsDB").collection("addDonations");
         const addProductsCollection = client.db('PawsDB').collection('addQueries')
         const adoptCollection = client.db('PawsDB').collection('adopt')
 
@@ -80,6 +81,53 @@ async function run() {
             }
             next();
         }
+
+        //add donations
+        app.post("/addDonations", async (req, res) => {
+            const result = await addDonationCollection.insertOne(req.body);
+            res.send(result)
+        })
+
+        app.get("/myDonations/:email", async (req, res) => {
+            const result = await addDonationCollection.find({ email: req.params.email }).toArray();
+            res.send(result)
+        })
+
+        app.get('/donations', async (req, res) => {
+            const cursor = addDonationCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.get("/donations/:id", async (req, res) => {
+            const result = await addDonationCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.get("/singleDonation/:id", async (req, res) => {
+            const result = await addDonationCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.put("/updateDonation/:id", async (req, res) => {
+            const query = { _id: new ObjectId(req.params.id) };
+            const data = {
+                $set: {
+                    Product_Name: req.body.Product_Name,
+                    Product_Brand: req.body.Product_Brand,
+                    image: req.body.image,
+                    Boycotting_Reason_Details: req.body.Boycotting_Reason_Details,
+                    Query_Title: req.body.Query_Title,
+                }
+            }
+            const result = await addDonationCollection.updateOne(query, data);
+            res.send(result)
+        })
+
+        app.delete("/deleted/:id", async (req, res) => {
+            const result = await addDonationCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+            res.send(result)
+        })
 
         //adopt pets
         app.post("/adopt", async (req, res) => {
@@ -244,6 +292,59 @@ async function run() {
 
         app.get("/donations/:id", async (req, res) => {
             const result = await DonationCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.get("/singleDonation/:id", async (req, res) => {
+            const result = await DonationCollection.findOne({ _id: new ObjectId(req.params.id), });
+            res.send(result)
+        })
+
+        app.get('/donations/:email', async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            const query = { email: email };
+            const adopt = await DonationCollection.findOne(query);
+            let pending = false;
+            if (adopt) {
+                pending = adopt?.role === 'pending';
+            }
+            res.send({ pending });
+        })
+
+        app.patch('/donations/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    role: 'pending'
+                }
+            }
+            const result = await DonationCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+        app.delete('/donations/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await DonationCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        app.put("/updateDonations/:id", async (req, res) => {
+            const query = { _id: new ObjectId(req.params.id) };
+            const data = {
+                $set: {
+                    pet_name: req.body.pet_name,
+                    pet_age: req.body.pet_age,
+                    pet_image: req.body.pet_image,
+                    pet_location: req.body.pet_location,
+                    pet_type: req.body.pet_type,
+                }
+            }
+            const result = await DonationCollection.updateOne(query, data);
             res.send(result)
         })
 
